@@ -1484,10 +1484,12 @@ function exportReport() {
   XLSX.utils.book_append_sheet(wb, wsHw, 'Hardwares');
 
   // ── Aba: Frotas ──
+  const allMachinesForReport = [...frotaReal, ...machines.filter(m => VIRTUAL_LABELS[m.tipo])];
   const frotaRows = [['ID', 'FROTA', 'TIPO', 'MODELO', 'ANO', 'UNIDADE', 'CHASSI', 'PATRIMÔNIO']];
   let frotaRowSeq = 1;
-  frotaReal.forEach(m => {
-    frotaRows.push([frotaRowSeq++, m.id, MACHINE_TYPES[m.tipo].label, m.modelo || '-', m.ano || '-', m.unidade, m.chassi || '-', m.patrimonio || '-']);
+  allMachinesForReport.forEach(m => {
+    const tipoLabel = MACHINE_TYPES[m.tipo]?.label || VIRTUAL_LABELS[m.tipo] || m.tipo;
+    frotaRows.push([frotaRowSeq++, m.id, tipoLabel, m.modelo || '-', m.ano || '-', m.unidade, m.chassi || '-', m.patrimonio || '-']);
   });
   const wsFrota = XLSX.utils.aoa_to_sheet(frotaRows);
   wsFrota['!cols'] = [{ wch: 6 }, { wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 6 }, { wch: 12 }, { wch: 14 }, { wch: 12 }];
@@ -1496,13 +1498,14 @@ function exportReport() {
   // ── Aba: Frotas + Hardwares (Frota/Tipo repetidos em cada linha — sem merge, pra não quebrar o AutoFilter) ──
   const combRows = [['Frota', 'Tipo', 'Hardware', 'Modelo', 'Numero de Série', 'Patrimônio', 'Fabricante']];
   const repeatRows = []; // linhas onde Frota/Tipo repetem o valor da linha anterior (mesma máquina) — só estilo, não afeta o valor real
-  frotaReal.forEach(m => {
+  allMachinesForReport.forEach(m => {
+    const tipoLabel = MACHINE_TYPES[m.tipo]?.label || VIRTUAL_LABELS[m.tipo] || m.tipo;
     if (m.hardware.length === 0) {
-      combRows.push([m.id, MACHINE_TYPES[m.tipo].label, '-', '-', '-', '-', '-']);
+      combRows.push([m.id, tipoLabel, '-', '-', '-', '-', '-']);
     } else {
       m.hardware.forEach((hw, idx) => {
         combRows.push([
-          m.id, MACHINE_TYPES[m.tipo].label,
+          m.id, tipoLabel,
           HW_TYPES[hw.tipo]?.label || hw.tipo,
           hw.modelo, hw.sn, hw.patrimonio || '-', hw.fabricante,
         ]);
